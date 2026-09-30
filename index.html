@@ -1,41 +1,745 @@
 <!DOCTYPE html>
 <html lang="ko">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>오늘 먹을 저녁 메뉴 추천 (저메추)</title>
-    <link rel="stylesheet" href="style.css">
-    <!-- Google Fonts -->
-    <link rel="preconnect" href="https://fonts.googleapis.com">
-    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-    <link href="https://fonts.googleapis.com/css2?family=Gowun+Dodum&family=Jua&display=swap" rel="stylesheet">
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>오급점! - 오늘의 급식 점수</title>
+  <!-- Google Fonts: 둥글둥글 귀여운 폰트 (Single Day, Gamja Flower, Jua) -->
+  <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Gamja+Flower&family=Jua&family=Single+Day&display=swap">
+  <style>
+    :root {
+      --primary-yellow: #FFD23F;
+      --secondary-yellow: #FFF2C2;
+      --bg-color: #FFFDF5;
+      --card-bg: #FFFFFF;
+      --tray-bg: #F8F8F9;
+      --tray-border: #E5E7EB;
+      --text-color: #4A3E3D;
+      --accent-orange: #FF7043;
+      --border-radius: 28px;
+    }
+
+    * {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+      font-family: 'Single Day', 'Gamja Flower', cursive, sans-serif;
+    }
+
+    body {
+      background-color: var(--bg-color);
+      /* 매우 연하고 은은한 파스텔 노랑 땡땡이 패브릭 패턴 */
+      background-image: 
+        radial-gradient(rgba(255, 210, 63, 0.18) 18%, transparent 19%),
+        radial-gradient(rgba(255, 210, 63, 0.18) 18%, transparent 19%);
+      background-size: 50px 50px;
+      background-position: 0 0, 25px 25px;
+      color: var(--text-color);
+      min-height: 100vh;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      position: relative;
+      overflow-x: hidden;
+      padding: 20px;
+    }
+
+    /* 은은하게 떠다니는 배경 귀요미 음식 이모티콘 (말풍선 삭제 완료!) */
+    .bg-food {
+      position: absolute;
+      font-size: 2.8rem;
+      opacity: 0.38;
+      user-select: none;
+      pointer-events: none;
+      filter: drop-shadow(0 4px 8px rgba(255, 210, 63, 0.25));
+      animation: floatRotate 6s ease-in-out infinite alternate;
+      z-index: 1;
+    }
+
+    @keyframes floatRotate {
+      0% { transform: translateY(0px) rotate(0deg) scale(1); }
+      50% { transform: translateY(-18px) rotate(10deg) scale(1.08); }
+      100% { transform: translateY(10px) rotate(-8deg) scale(0.95); }
+    }
+
+    /* floating 위치 및 크기 세팅 */
+    .f-1 { top: 6%; left: 5%; animation-delay: 0s; font-size: 3.4rem; }
+    .f-2 { top: 8%; right: 6%; animation-delay: 1.2s; font-size: 3.2rem; }
+    .f-3 { top: 38%; left: 3%; animation-delay: 2.5s; font-size: 2.8rem; }
+    .f-4 { top: 42%; right: 4%; animation-delay: 0.7s; font-size: 3rem; }
+    .f-5 { bottom: 8%; left: 6%; animation-delay: 3.1s; font-size: 3.3rem; }
+    .f-6 { bottom: 6%; right: 5%; animation-delay: 1.8s; font-size: 3.5rem; }
+    .f-7 { top: 22%; left: 12%; animation-delay: 4.2s; opacity: 0.22; }
+    .f-8 { top: 25%; right: 13%; animation-delay: 2.1s; opacity: 0.22; }
+    .f-9 { bottom: 28%; left: 11%; animation-delay: 3.5s; opacity: 0.22; }
+    .f-10 { bottom: 25%; right: 12%; animation-delay: 0.4s; opacity: 0.22; }
+
+    @media (max-width: 768px) {
+      .bg-food { font-size: 2.2rem; opacity: 0.25; }
+    }
+
+    /* 메인 카드 컨테이너 */
+    .container {
+      width: 100%;
+      max-width: 480px;
+      background: var(--card-bg);
+      border-radius: var(--border-radius);
+      box-shadow: 0 16px 40px rgba(255, 190, 0, 0.25);
+      border: 5px solid var(--secondary-yellow);
+      padding: 32px 22px;
+      text-align: center;
+      position: relative;
+      z-index: 10;
+    }
+
+    .title-group {
+      margin-bottom: 22px;
+    }
+
+    .title-group h1 {
+      font-family: 'Jua', sans-serif;
+      font-size: 2.7rem;
+      color: #E6A100;
+      margin-bottom: 2px;
+      letter-spacing: 1px;
+      text-shadow: 2px 2px 0px #FFF3C4;
+    }
+
+    .title-group p {
+      font-size: 1.35rem;
+      color: #8C7B78;
+    }
+
+    /* 검색 폼 */
+    .search-form {
+      display: flex;
+      flex-direction: column;
+      gap: 12px;
+      margin-bottom: 20px;
+    }
+
+    .input-field {
+      width: 100%;
+      padding: 12px 18px;
+      border: 3px solid var(--secondary-yellow);
+      border-radius: 20px;
+      font-size: 1.3rem;
+      outline: none;
+      transition: all 0.2s;
+      background-color: #FFFFF8;
+    }
+
+    .input-field:focus {
+      border-color: #E6A100;
+      box-shadow: 0 0 0 4px rgba(255, 210, 63, 0.35);
+    }
+
+    .submit-btn {
+      background-color: var(--primary-yellow);
+      color: #4A3E3D;
+      border: none;
+      border-radius: 20px;
+      padding: 12px;
+      font-family: 'Jua', sans-serif;
+      font-size: 1.55rem;
+      cursor: pointer;
+      box-shadow: 0 5px 0 #D9B000;
+      transition: all 0.1s;
+    }
+
+    .submit-btn:active {
+      transform: translateY(4px);
+      box-shadow: none;
+    }
+
+    /* 두구두구 두근두근 로딩 애니메이션 */
+    .loading-box {
+      display: none;
+      padding: 28px 0;
+    }
+
+    .drum-icon {
+      font-size: 4.8rem;
+      display: inline-block;
+      animation: drumRoll 0.14s infinite alternate;
+    }
+
+    @keyframes drumRoll {
+      from { transform: rotate(-14deg) scale(0.95); }
+      to { transform: rotate(14deg) scale(1.15); }
+    }
+
+    .loading-text {
+      font-family: 'Jua', sans-serif;
+      font-size: 1.85rem;
+      color: #E6A100;
+      margin-top: 14px;
+    }
+
+    .result-box {
+      display: none;
+      animation: popUp 0.45s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+    }
+
+    @keyframes popUp {
+      0% { opacity: 0; transform: scale(0.82); }
+      100% { opacity: 1; transform: scale(1); }
+    }
+
+    /* 5칸 식판 UI */
+    .meal-tray {
+      background: var(--tray-bg);
+      border: 4px solid var(--tray-border);
+      border-radius: 24px;
+      padding: 16px;
+      margin-bottom: 20px;
+      box-shadow: inset 0 3px 6px rgba(0,0,0,0.06);
+    }
+
+    .tray-top {
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap: 10px;
+      margin-bottom: 10px;
+    }
+
+    .tray-bottom {
+      display: grid;
+      grid-template-columns: repeat(2, 1fr);
+      gap: 10px;
+    }
+
+    .tray-cell {
+      background: #FFFFFF;
+      border: 2px solid #E5E7EB;
+      border-radius: 16px;
+      padding: 10px 6px;
+      min-height: 78px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 1.25rem;
+      font-weight: bold;
+      color: #374151;
+      word-break: keep-all;
+      box-shadow: inset 0 2px 4px rgba(0,0,0,0.03);
+      line-height: 1.2;
+    }
+
+    /* 점수 그룹 */
+    .score-group {
+      background: #FFFDF0;
+      border: 3px solid var(--secondary-yellow);
+      border-radius: 20px;
+      padding: 16px 18px;
+      margin-bottom: 16px;
+    }
+
+    .score-item {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      padding: 8px 0;
+    }
+
+    .score-item:first-child {
+      border-bottom: 2px dashed #FFE599;
+    }
+
+    .score-label {
+      font-family: 'Jua', sans-serif;
+      font-size: 1.45rem;
+    }
+
+    .stars {
+      color: #E0E0E0;
+      font-size: 1.55rem;
+      letter-spacing: 2px;
+    }
+
+    .star-filled {
+      color: #FFB800;
+    }
+
+    /* 더보기 버튼 및 상세 이유 */
+    .detail-btn {
+      background-color: #FFF3C4;
+      color: #9E6B00;
+      border: 2px dashed #FFD23F;
+      border-radius: 16px;
+      padding: 10px;
+      width: 100%;
+      font-family: 'Jua', sans-serif;
+      font-size: 1.35rem;
+      cursor: pointer;
+      transition: all 0.2s;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 6px;
+    }
+
+    .detail-btn:hover {
+      background-color: #FFE999;
+    }
+
+    .reason-box {
+      display: none;
+      background: #FFFFFF;
+      border: 2px solid #FFE599;
+      border-radius: 16px;
+      padding: 16px;
+      margin-top: 12px;
+      text-align: left;
+      font-size: 1.25rem;
+      line-height: 1.5;
+      color: #5D4037;
+      box-shadow: 0 4px 12px rgba(0,0,0,0.03);
+      animation: fadeIn 0.3s ease-in-out;
+    }
+
+    .reason-title {
+      font-family: 'Jua', sans-serif;
+      color: #E6A100;
+      font-size: 1.35rem;
+      margin-bottom: 8px;
+      display: flex;
+      align-items: center;
+      gap: 6px;
+    }
+
+    .reason-list {
+      list-style: none;
+      padding: 0;
+    }
+
+    .reason-list li {
+      margin-bottom: 6px;
+      position: relative;
+      padding-left: 20px;
+    }
+
+    .reason-list li::before {
+      content: "•";
+      position: absolute;
+      left: 6px;
+      color: var(--accent-orange);
+      font-weight: bold;
+    }
+
+    /* 휴일/에러 처리 */
+    .no-meal-box {
+      display: none;
+      padding: 30px 10px;
+      animation: fadeIn 0.3s ease-in;
+    }
+
+    .no-meal-icon {
+      font-size: 4rem;
+      margin-bottom: 12px;
+    }
+
+    .no-meal-text {
+      font-family: 'Jua', sans-serif;
+      font-size: 1.6rem;
+      color: #777;
+    }
+
+    /* 축하 별가루 폭죽 이펙트 */
+    .sparkle {
+      position: fixed;
+      pointer-events: none;
+      font-size: 1.8rem;
+      z-index: 100;
+      animation: sparkleBurst 1s forwards ease-out;
+    }
+
+    @keyframes sparkleBurst {
+      0% { opacity: 1; transform: translate(0, 0) scale(1) rotate(0deg); }
+      100% { opacity: 0; transform: translate(var(--dx), var(--dy)) scale(1.6) rotate(180deg); }
+    }
+
+    @keyframes fadeIn {
+      from { opacity: 0; transform: translateY(-6px); }
+      to { opacity: 1; transform: translateY(0); }
+    }
+  </style>
 </head>
 <body>
-    <div class="container">
-        <header>
-            <span class="badge">오늘 뭐 먹지? 🤔</span>
-            <h1>오늘 먹을 저녁 메뉴 추천</h1>
-            <p class="subtitle">결정 장애를 위한 최고의 저녁 메뉴 랜덤 추천기!</p>
-        </header>
 
-        <main class="card">
-            <div class="display-area">
-                <div id="emoji" class="emoji-box">🍳</div>
-                <div id="menu-name" class="menu-title">버튼을 눌러주세요!</div>
-                <div id="menu-category" class="menu-category">맛있는 저녁이 기다리고 있어요</div>
-            </div>
+  <!-- 은은하고 귀여운 파스텔 음식 이모티콘들 -->
+  <div class="bg-food f-1">🍱</div>
+  <div class="bg-food f-2">🍌</div>
+  <div class="bg-food f-3">🍙</div>
+  <div class="bg-food f-4">🥛</div>
+  <div class="bg-food f-5">🍎</div>
+  <div class="bg-food f-6">🍤</div>
+  <div class="bg-food f-7">🧀</div>
+  <div class="bg-food f-8">🥖</div>
+  <div class="bg-food f-9">🍮</div>
+  <div class="bg-food f-10">🍕</div>
 
-            <button id="recommend-btn" class="btn">
-                <span class="btn-icon">🎲</span>
-                <span class="btn-text">저메추!</span>
-            </button>
-        </main>
-
-        <footer>
-            <p>© 2026 저메추 추천기 | 맛있는 저녁 되세요! ✨</p>
-        </footer>
+  <div class="container">
+    <div class="title-group">
+      <h1>🍱 오급점!</h1>
+      <p>오늘 우리 학교 급식 점수는 몇 점?</p>
     </div>
 
-    <script src="script.js"></script>
+    <!-- 검색 입력 폼 -->
+    <form class="search-form" id="mealForm">
+      <input type="text" id="schoolInput" class="input-field" placeholder="학교 이름을 입력하세요 (예: 서울초등학교)" required>
+      <input type="date" id="dateInput" class="input-field" required>
+      <button type="submit" class="submit-btn">점수 확인하기!</button>
+    </form>
+
+    <!-- 1. 두구두구 로딩 화면 -->
+    <div class="loading-box" id="loadingBox">
+      <div class="drum-icon">🥁</div>
+      <div class="loading-text">두구두구두구...</div>
+    </div>
+
+    <!-- 2. 결과 화면 (5칸 식판) -->
+    <div class="result-box" id="resultBox">
+      <div class="meal-tray">
+        <div class="tray-top">
+          <div class="tray-cell" id="side1">반찬 1</div>
+          <div class="tray-cell" id="side2">반찬 2</div>
+          <div class="tray-cell" id="side3">반찬 3/디저트</div>
+        </div>
+        <div class="tray-bottom">
+          <div class="tray-cell" id="mainRice">밥</div>
+          <div class="tray-cell" id="mainSoup">국</div>
+        </div>
+      </div>
+      
+      <!-- 점수 카드 -->
+      <div class="score-group">
+        <div class="score-item">
+          <span class="score-label">🥗 건강도</span>
+          <div class="stars" id="healthStars"></div>
+        </div>
+        <div class="score-item">
+          <span class="score-label">😋 맛 점수</span>
+          <div class="stars" id="tasteStars"></div>
+        </div>
+      </div>
+
+      <!-- 더보기 버튼 및 상세 사유 -->
+      <button type="button" class="detail-btn" id="toggleDetailBtn">
+        <span>왜 이런 점수가 나왔을까? 🔍</span>
+      </button>
+
+      <div class="reason-box" id="reasonBox">
+        <div class="reason-title">📊 오급점 심사위원회의 분석 리포트</div>
+        <ul class="reason-list" id="reasonList">
+          <!-- 스크립트로 dynamic rendering -->
+        </ul>
+      </div>
+    </div>
+
+    <!-- 3. 휴일 및 에러 화면 -->
+    <div class="no-meal-box" id="noMealBox">
+      <div class="no-meal-icon" id="noMealIcon">💤</div>
+      <div class="no-meal-text" id="noMealText">오늘은 급식이 없는 날이에요 🍳</div>
+    </div>
+  </div>
+
+  <script>
+    // 오늘 날짜 기본 세팅
+    document.getElementById('dateInput').valueAsDate = new Date();
+
+    // 별점 렌더링
+    function renderStars(score) {
+      let starsHtml = '';
+      for (let i = 1; i <= 5; i++) {
+        if (i <= score) {
+          starsHtml += '<span class="star-filled">★</span>';
+        } else {
+          starsHtml += '<span>☆</span>';
+        }
+      }
+      return starsHtml;
+    }
+
+    // Web Audio API 효과음 (드럼 두구두구 & 빠밤 팡파르)
+    function playDrumRollSound() {
+      const audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+      let count = 0;
+      const interval = setInterval(() => {
+        const osc = audioCtx.createOscillator();
+        const gain = audioCtx.createGain();
+        osc.type = 'triangle';
+        osc.frequency.setValueAtTime(100 + Math.random() * 40, audioCtx.currentTime);
+        gain.gain.setValueAtTime(0.15, audioCtx.currentTime);
+        gain.gain.exponentialRampToValueAtTime(0.01, audioCtx.currentTime + 0.05);
+        osc.connect(gain);
+        gain.connect(audioCtx.destination);
+        osc.start();
+        osc.stop(audioCtx.currentTime + 0.05);
+
+        count++;
+        if (count > 20) clearInterval(interval);
+      }, 80);
+    }
+
+    function playTaDaSound() {
+      const audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+      const notes = [261.63, 329.63, 392.00, 523.25]; // C E G C (빠밤!)
+      notes.forEach((freq, index) => {
+        const osc = audioCtx.createOscillator();
+        const gain = audioCtx.createGain();
+        osc.frequency.value = freq;
+        gain.gain.setValueAtTime(0.1, audioCtx.currentTime + (index * 0.05));
+        gain.gain.exponentialRampToValueAtTime(0.001, audioCtx.currentTime + 0.6);
+        osc.connect(gain);
+        gain.connect(audioCtx.destination);
+        osc.start(audioCtx.currentTime + (index * 0.05));
+        osc.stop(audioCtx.currentTime + 0.6);
+      });
+    }
+
+    // 빠밤! 별가루 폭죽 연출
+    function triggerSparkles() {
+      const emojis = ['✨', '⭐', '🌟', '🎉', '🍱', '😋'];
+      for (let i = 0; i < 20; i++) {
+        const el = document.createElement('div');
+        el.className = 'sparkle';
+        el.innerText = emojis[Math.floor(Math.random() * emojis.length)];
+        
+        const startX = window.innerWidth / 2;
+        const startY = window.innerHeight / 2;
+        
+        const dx = (Math.random() - 0.5) * 350 + 'px';
+        const dy = (Math.random() - 0.5) * 350 + 'px';
+
+        el.style.left = startX + 'px';
+        el.style.top = startY + 'px';
+        el.style.setProperty('--dx', dx);
+        el.style.setProperty('--dy', dy);
+
+        document.body.appendChild(el);
+        setTimeout(() => el.remove(), 1000);
+      }
+    }
+
+    // NEIS 나이스 Open API 식단 조회
+    async function fetchNeisMealData(schoolName, yyyymmdd) {
+      try {
+        const schoolRes = await fetch(`https://open.neis.go.kr/hub/schoolInfo?Type=json&pIndex=1&pSize=5&SCHUL_NM=${encodeURIComponent(schoolName)}`);
+        const schoolData = await schoolRes.json();
+
+        if (!schoolData.schoolInfo) {
+          return { error: '학교를 찾을 수 없습니다. 정확한 학교명을 입력해 주세요!' };
+        }
+
+        const schoolInfo = schoolData.schoolInfo[1].row[0];
+        const officeCode = schoolInfo.ATPT_OFCDC_SC_CODE;
+        const schoolCode = schoolInfo.SD_SCHUL_CODE;
+
+        const mealRes = await fetch(`https://open.neis.go.kr/hub/mealServiceDietInfo?Type=json&ATPT_OFCDC_SC_CODE=${officeCode}&SD_SCHUL_CODE=${schoolCode}&MLSV_YMD=${yyyymmdd}`);
+        const mealData = await mealRes.json();
+
+        if (!mealData.mealServiceDietInfo) {
+          return { noMeal: true };
+        }
+
+        const mealRow = mealData.mealServiceDietInfo[1].row;
+        const lunch = mealRow.find(m => m.MMEAL_SC_NM === '중식') || mealRow[0];
+
+        // 알레르기 번호 제거 및 정제
+        const rawMenu = lunch.DDISH_NM.replace(/<br\/>/g, '\n')
+                                     .replace(/\([0-9.]+\)/g, '')
+                                     .trim();
+
+        const menuList = rawMenu.split('\n').map(m => m.trim()).filter(m => m.length > 0);
+
+        return { menuList };
+
+      } catch (err) {
+        console.error(err);
+        return { error: '급식 데이터를 불러오는 도중 오류가 발생했습니다.' };
+      }
+    }
+
+    // 급식 메뉴 분석 및 위트 있는 사유 생성
+    function analyzeMealAndGenerateReasons(menuList) {
+      const fullMenuStr = menuList.join(' ');
+      
+      let healthReasons = [];
+      let tasteReasons = [];
+
+      let healthScore = 3;
+      let tasteScore = 3;
+
+      const meatKeywords = ['돈가스', '돈까스', '치킨', '닭', '불고기', '갈비', '제육', '탕수육', '고기', '함박', '스테이크', '너겟', '소시지'];
+      const veggieKeywords = ['샐러드', '나물', '무침', '김치', '생채', '오이', '상추', '야채', '채소', '브로콜리'];
+      const dessertKeywords = ['요구르트', '아이스크림', '푸딩', '음료', '주스', '과일', '사과', '바나나', '귤', '샤인머스캣', '딸기', '빵', '케이크', '파이', '와플'];
+      const healthRiceSoup = ['현미밥', '잡곡밥', '차조밥', '콩밥', '미역국', '된장국', '시래깃국', '콩나물국'];
+
+      const foundMeats = meatKeywords.filter(k => fullMenuStr.includes(k));
+      if (foundMeats.length > 0) {
+        tasteScore += 1;
+        tasteReasons.push(`맛보장 육류/튀김 메뉴 (${foundMeats.join(', ')}) 탑재! 🍖`);
+      }
+
+      const foundDesserts = dessertKeywords.filter(k => fullMenuStr.includes(k));
+      if (foundDesserts.length > 0) {
+        tasteScore += 1;
+        tasteReasons.push(`행복지수 솟구치는 상큼달콤 디저트 (${foundDesserts.join(', ')}) 등장! 🍦`);
+      }
+
+      if (tasteScore < 5 && (fullMenuStr.includes('스파게티') || fullMenuStr.includes('짜장') || fullMenuStr.includes('떡볶이') || fullMenuStr.includes('우동'))) {
+        tasteScore += 1;
+        tasteReasons.push('학생들의 영원한 최애 특식/면류 조합이 들어있어요! 🍝');
+      }
+
+      const foundVeggies = veggieKeywords.filter(k => fullMenuStr.includes(k));
+      if (foundVeggies.length >= 2) {
+        healthScore += 1;
+        healthReasons.push(`신선한 야채/채소 반찬 (${foundVeggies.join(', ')})으로 무장! 🥗`);
+      } else if (foundVeggies.length === 1) {
+        healthReasons.push(`영양사님의 세심한 밸런스 반찬 (${foundVeggies[0]}) 배치! 🥦`);
+      }
+
+      const foundGoodRiceSoup = healthRiceSoup.filter(k => fullMenuStr.includes(k));
+      if (foundGoodRiceSoup.length > 0) {
+        healthScore += 1;
+        healthReasons.push(`속을 따뜻하고 건강하게 해주는 구수한 밥/국 조합! 🥣`);
+      }
+
+      if (healthReasons.length === 0) {
+        healthReasons.push('탄단지(탄수화물, 단백질, 지방) 균형이 알맞게 잡힌 기본 식단이에요! ⚖️');
+      }
+      if (tasteReasons.length === 0) {
+        tasteReasons.push('부담 없이 속 편하고 고소하게 즐길 수 있는 집밥 감성 메뉴! 🍚');
+      }
+
+      healthScore = Math.min(5, Math.max(2, healthScore));
+      tasteScore = Math.min(5, Math.max(2, tasteScore));
+
+      return {
+        healthScore,
+        tasteScore,
+        reasons: [
+          ...healthReasons.map(r => `[건강도] ${r}`),
+          ...tasteReasons.map(r => `[맛점수] ${r}`)
+        ]
+      };
+    }
+
+    // 5칸 식판에 메뉴 채워 넣기
+    function populateMealTray(menuList) {
+      document.getElementById('mainRice').innerText = '밥';
+      document.getElementById('mainSoup').innerText = '국';
+      document.getElementById('side1').innerText = '-';
+      document.getElementById('side2').innerText = '-';
+      document.getElementById('side3').innerText = '-';
+
+      if (!menuList || menuList.length === 0) return;
+
+      let rice = '', soup = '', sides = [];
+
+      menuList.forEach(item => {
+        if (!rice && (item.includes('밥') || item.includes('라이스') || item.includes('죽'))) {
+          rice = item;
+        } else if (!soup && (item.includes('국') || item.includes('찌개') || item.includes('탕') || item.includes('스프'))) {
+          soup = item;
+        } else {
+          sides.push(item);
+        }
+      });
+
+      if (!rice && sides.length > 0) rice = sides.shift();
+      if (!soup && sides.length > 0) soup = sides.shift();
+
+      document.getElementById('mainRice').innerText = rice || '밥';
+      document.getElementById('mainSoup').innerText = soup || '국';
+
+      if (sides[0]) document.getElementById('side1').innerText = sides[0];
+      if (sides[1]) document.getElementById('side2').innerText = sides[1];
+      if (sides[2]) document.getElementById('side3').innerText = sides.slice(2).join(', ');
+    }
+
+    // 상세 분석 사유 토글
+    const toggleDetailBtn = document.getElementById('toggleDetailBtn');
+    const reasonBox = document.getElementById('reasonBox');
+
+    toggleDetailBtn.addEventListener('click', () => {
+      if (reasonBox.style.display === 'block') {
+        reasonBox.style.display = 'none';
+        toggleDetailBtn.innerHTML = '<span>왜 이런 점수가 나왔을까? 🔍</span>';
+      } else {
+        reasonBox.style.display = 'block';
+        toggleDetailBtn.innerHTML = '<span>이유 닫기 🔼</span>';
+      }
+    });
+
+    // 폼 제출 이벤트
+    document.getElementById('mealForm').addEventListener('submit', async function(e) {
+      e.preventDefault();
+
+      const school = document.getElementById('schoolInput').value.trim();
+      const dateVal = document.getElementById('dateInput').value;
+      const yyyymmdd = dateVal.replace(/-/g, '');
+      const selectedDate = new Date(dateVal);
+      const dayOfWeek = selectedDate.getDay();
+
+      document.getElementById('resultBox').style.display = 'none';
+      document.getElementById('noMealBox').style.display = 'none';
+      reasonBox.style.display = 'none';
+      toggleDetailBtn.innerHTML = '<span>왜 이런 점수가 나왔을까? 🔍</span>';
+
+      // 1. 두구두구 로딩 연출
+      document.getElementById('loadingBox').style.display = 'block';
+      playDrumRollSound();
+
+      // 주말 예외 처리
+      if (dayOfWeek === 0 || dayOfWeek === 6) {
+        setTimeout(() => {
+          document.getElementById('loadingBox').style.display = 'none';
+          document.getElementById('noMealIcon').innerText = '💤';
+          document.getElementById('noMealText').innerText = '오늘은 급식이 없는 날이에요 🍳';
+          document.getElementById('noMealBox').style.display = 'block';
+        }, 1500);
+        return;
+      }
+
+      // 나이스 API 호출
+      const result = await fetchNeisMealData(school, yyyymmdd);
+
+      setTimeout(() => {
+        document.getElementById('loadingBox').style.display = 'none';
+
+        if (result.error) {
+          document.getElementById('noMealIcon').innerText = '❓';
+          document.getElementById('noMealText').innerText = result.error;
+          document.getElementById('noMealBox').style.display = 'block';
+          return;
+        }
+
+        if (result.noMeal) {
+          document.getElementById('noMealIcon').innerText = '🍳';
+          document.getElementById('noMealText').innerText = '오늘은 급식이 없는 날이에요ㅠ';
+          document.getElementById('noMealBox').style.display = 'block';
+          return;
+        }
+
+        // 정상 급식 데이터 로드 성공 (빠밤!)
+        playTaDaSound();
+        triggerSparkles();
+        populateMealTray(result.menuList);
+
+        const analysis = analyzeMealAndGenerateReasons(result.menuList);
+
+        document.getElementById('healthStars').innerHTML = renderStars(analysis.healthScore);
+        document.getElementById('tasteStars').innerHTML = renderStars(analysis.tasteScore);
+
+        const reasonListEl = document.getElementById('reasonList');
+        reasonListEl.innerHTML = analysis.reasons.map(r => `<li>${r}</li>`).join('');
+
+        document.getElementById('resultBox').style.display = 'block';
+      }, 1500);
+    });
+  </script>
 </body>
 </html>
